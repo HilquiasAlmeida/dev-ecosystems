@@ -1,0 +1,72 @@
+name: Atualizar Dev Ecosystems
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Roda todo dia automaticamente
+  workflow_dispatch: # Permite rodar manualmente quando quiser
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: Atualizar README com repositórios
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -c '
+          import urllib.request
+          import json
+
+          url = "https://api.github.com/users/HilquiasAlmeida/repos?per_page=100"
+          req = urllib.request.Request(url, headers={"User-Agent": "GitHub-Action"})
+          try:
+              with urllib.request.urlopen(req) as response:
+                  repos = json.loads(response.read().decode())
+          except Exception as e:
+              print(f"Erro: {e}")
+              repos = []
+
+          # Filtra APENAS os repositórios que possuem o tópico "dev-ecosystems"
+          filtered = [r for r in repos if "dev-ecosystems" in r.get("topics", []) and r["name"] != "dev-ecosystems"]
+
+          content_list = ""
+          for r in sorted(filtered, key=lambda x: x["name"]):
+              name = r["name"]
+              desc = r["description"] or "Sem descrição."
+              html_url = r["html_url"]
+              content_list += f"- 🌐 **[{name}]({html_url})** - {desc}\n"
+
+          if not content_list:
+              content_list = "- *Nenhum projeto com a tag \"dev-ecosystems\" encontrado no momento.*\n"
+
+          with open("README.md", "r", encoding="utf-8") as f:
+              readme = f.read()
+
+          start_marker = "<!-- REPOS_LIST:START -->"
+          end_marker = "<!-- REPOS_LIST:END -->"
+
+          if start_marker in readme and end_marker in readme:
+              start_idx = readme.find(start_marker) + len(start_marker)
+              end_idx = readme.find(end_marker)
+              new_readme = readme[:start_idx] + "\n" + content_list + "\n" + readme[end_idx:]
+              
+              with open("README.md", "w", encoding="utf-8") as f:
+                  f.write(new_readme)
+          '
+          
+      - name: Commit e Push das alterações
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Atualiza lista do dev-ecosystems automaticamente [skip ci]" && git push)
