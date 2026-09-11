@@ -7,7 +7,8 @@ Minha central de ecossistemas de desenvolvimento! Um espaço criado para mostrar
 ## 📂 Meus Projetos Automáticos
 
 <!-- REPOS_LIST:START -->
-<!-- A lista de projetos aparecerá aqui automaticamente -->
+- 🌐 **[World-GitHub](https://github.com/HilquiasAlmeida/World-GitHub)** - 🌍 Guia definitivo e centralizado sobre o ecossistema Git, GitHub, GitLab, fluxos de trabalho, automações e ferramentas visuais
+
 <!-- REPOS_LIST:END -->
 
 ---
